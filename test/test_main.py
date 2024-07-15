@@ -12,6 +12,7 @@ from application.dtos.weather_request import WeatherRequestInputDto
 from application.services.weather import WeatherService
 from domain.models.weather_data import WeatherData
 from domain.models.weather_request import WeatherRequest
+from infrastructure.celery_setup.celery_tasks import periodic
 from infrastructure.repositories.weather_data_sqlalchemy_repository import WeatherDataSqlalchemyRepository
 from infrastructure.repositories.weather_request_sqlalchemy_repository import WeatherRequestSqlalchemyRepository
 from infrastructure.persistence.database import Base
@@ -27,6 +28,14 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base.metadata.create_all(bind=engine)
+
+
+def get_db_session():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 def override_get_weather_service():
@@ -210,3 +219,70 @@ def test_weather_service_save_weather_request(seed_weather_requests):
     created_weather_request = weather_service.save_weather_request(weather_request_dto)
     assert created_weather_request.id == "test5"
 
+def test_weather_data_sql_alchemy_repository_filter_by_request_id(seed_weather_requests):
+    weather_data_repository = WeatherDataSqlalchemyRepository(next(get_db_session()))
+    weather_data_by_requests_id = weather_data_repository.filter_by_request_id("test1")
+    assert len(weather_data_by_requests_id) == 8
+    
+def test_weather_data_sql_alchemy_repository_filter_by_request_id_empty(seed_weather_requests):
+    weather_data_repository = WeatherDataSqlalchemyRepository(next(get_db_session()))
+    weather_data_by_requests_id = weather_data_repository.filter_by_request_id("test2")
+    assert len(weather_data_by_requests_id) == 0
+    
+def test_weather_data_sql_alchemy_repository_filter_by_request_id_not_existent_request(seed_weather_requests):
+    weather_data_repository = WeatherDataSqlalchemyRepository(next(get_db_session()))
+    weather_data_by_requests_id = weather_data_repository.filter_by_request_id("test404")
+    assert len(weather_data_by_requests_id) == 0
+
+def test_weather_data_sql_alchemy_repository_save(seed_weather_requests):
+    weather_data = WeatherData(id=9, user_request_timestamp=datetime.now(), city_id="3439902", temperature_celsius=8.66, humidity=66, request_id="test1", ow_request_timestamp=datetime.now())
+    weather_data_repository = WeatherDataSqlalchemyRepository(next(get_db_session()))
+    created_weather_data = weather_data_repository.save(weather_data)
+    assert created_weather_data.id == 9
+    
+def test_weather_data_sql_alchemy_repository_save_already_existent_raises_integrity_exception(seed_weather_requests):
+    weather_data = WeatherData(id=1, user_request_timestamp=datetime.now(), city_id="3439902", temperature_celsius=8.66, humidity=66, request_id="test1", ow_request_timestamp=datetime.now())
+    weather_data_repository = WeatherDataSqlalchemyRepository(next(get_db_session()))
+    with pytest.raises(Exception):
+        created_weather_data = weather_data_repository.save(weather_data)
+    
+def test_weather_request_sql_alchemy_repository_get_by_id(seed_weather_requests):
+    weather_request_repository = WeatherRequestSqlalchemyRepository(next(get_db_session()))
+    weather_request = weather_request_repository.get_by_id("test1")
+    assert weather_request.id == "test1"
+    assert weather_request.completed == False
+
+def test_weather_request_sql_alchemy_repository_get_by_id_inexistent(seed_weather_requests):
+    weather_request_repository = WeatherRequestSqlalchemyRepository(next(get_db_session()))
+    weather_request = weather_request_repository.get_by_id("test5")
+    assert weather_request is None
+    
+def test_weather_request_sql_alchemy_repository_filter_uncompleted(seed_weather_requests):
+    weather_request_repository = WeatherRequestSqlalchemyRepository(next(get_db_session()))
+    weather_request_data = weather_request_repository.filter_uncompleted()
+    assert len(weather_request_data) == 4
+    
+def test_weather_request_sql_alchemy_repository_save(seed_weather_requests):
+    weather_request = WeatherRequest(id="test5", timestamp=datetime.now(), completed=False)
+    weather_request_repository = WeatherRequestSqlalchemyRepository(next(get_db_session()))
+    created_weather_request = weather_request_repository.save(weather_request)
+    assert created_weather_request.id == "test5"
+
+def test_weather_request_sql_alchemy_repository_save_existent_raises_integrity_exception(seed_weather_requests):
+    weather_request = WeatherRequest(id="test1", timestamp=datetime.now(), completed=False)
+    weather_request_repository = WeatherRequestSqlalchemyRepository(next(get_db_session()))
+    with pytest.raises(Exception):
+        created_weather_request = weather_request_repository.save(weather_request)
+
+def test_celery_tasks_periodic(seed_weather_requests):
+    # before periodic
+    weather_data_repository = WeatherDataSqlalchemyRepository(next(get_db_session()))
+    weather_data_by_requests_id = weather_data_repository.filter_by_request_id("test1")
+    assert len(weather_data_by_requests_id) == 8
+    # depends on http request to open weather api
+    periodic(next(get_db_session()))
+    # after periodic
+    weather_data_repository = WeatherDataSqlalchemyRepository(next(get_db_session()))
+    weather_data_by_requests_id = weather_data_repository.filter_by_request_id("test1")
+    assert len(weather_data_by_requests_id) == 9
+    

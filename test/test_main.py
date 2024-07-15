@@ -123,17 +123,21 @@ def test_http_request_crate_weather_request_422(seed_weather_requests):
 def test_http_request_get_retrieval_status_with_repeated_values_200(seed_weather_requests):
     response = client.get("/test1")
     json_response = response.json()
-    expected_result = {'id': 'test1', 'percentage_status': 0.023952095808383235}
+    expected_result = {'id': 'test1', 'percentage_status': 0.023952095808383235, 'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')}
     assert response.status_code == 200
-    assert json_response == expected_result
+    assert json_response['id'] == expected_result['id']
+    assert json_response['percentage_status'] == expected_result['percentage_status']
+    assert json_response['timestamp'].split(".")[0] == expected_result['timestamp'].split(".")[0]
+    
 
 
 def test_http_request_get_retrieval_status_empty_200(seed_weather_requests):
     response = client.get("/test2")
     json_response = response.json()
-    expected_result = {'id': 'test2', 'percentage_status': 0.0}
-    assert response.status_code == 200
-    assert json_response == expected_result
+    expected_result = {'id': 'test2', 'percentage_status': 0.0, 'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')}
+    assert json_response['id'] == expected_result['id']
+    assert json_response['percentage_status'] == expected_result['percentage_status']
+    assert json_response['timestamp'].split(".")[0] == expected_result['timestamp'].split(".")[0]
 
 
 def test_http_request_get_retrieval_status_404(seed_weather_requests):

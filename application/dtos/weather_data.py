@@ -32,3 +32,4 @@ class WeatherRetrievalStatusInputDto(BaseModel):
 
 class WeatherRetrievalStatusOutputDto(WeatherRetrievalStatusInputDto):
     percentage_status: float
+    timestamp: datetime

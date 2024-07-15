@@ -37,7 +37,7 @@ class WeatherService:
         weather_data = self.weather_data_repository.filter_by_request_id(weather_retrieval_status_input_dto.id)
         retrieval_percentage_status = len(set([wd.city_id for wd in weather_data]))/len(city_ids)
         return WeatherRetrievalStatusOutputDto(
-            id=weather_retrieval_status_input_dto.id, percentage_status=retrieval_percentage_status)
+            id=weather_retrieval_status_input_dto.id, percentage_status=retrieval_percentage_status, timestamp=weather_request.timestamp)
 
     def filter_retrieved_weather_data_by_request_id(self, weather_request_id: str) -> List[WeatherDataOutputDto]:
         retrieved_weather_data = self.weather_data_repository.filter_by_request_id(weather_request_id)

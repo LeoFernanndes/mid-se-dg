@@ -1,6 +1,6 @@
 # Weather Data DG
 
-Web api built with FastApi,Postgres and Celery + Redis.  
+Web api built with FastApi, Postgres and Celery + Redis.  
 
 ## Dependencies:
 Python 3.10 (3.10.14)  
@@ -31,20 +31,20 @@ payload: {"id": "unique_id"}
 3. May be done through command line requests like curl:
 `curl -H "Content-Type: application/json" -d '{"id": "unique_id"}' -X POST http://localhost:18000/`
 
-#### Get request to check data retrieval status: Sucessful response 200
+#### Get request to check data retrieval status: Successful response 200
 May be done using the same methods used to POST in addition to a simple browser request to http://localhost:18000/{id}
 
 ## Technical decisions
 ### Infrastructure
-1. Celery is a very common tool to manage asynchronous tasks with python beig recommended as standard solution by Django for example.  
-2 .The most common queue application used with Celery is Redis.  
+1. Celery is a very common tool to manage asynchronous tasks with python being recommended as standard solution by Django for example.  
+2. The most common queue application used with Celery is Redis.  
 3. The selected database, Postgres, also arise from the most common ones in terms of relational databases.  
 
 Considering the simplicity of the project, both Redis and Postgres are easily exposed as backing services using standard docker images.  
 
 ### Framework
-Fast api, as the name indicates, is a lightweight web framework created to easily come up with a decent service. It has beecome one of the top of mind python frameworks in recent years mainly taking place of Flask and has an engaged community.  
-The selected ORM, SqlAlchemy comes in pair with Alembic wich is a recomended solution for migrations management.
+Fast api, as the name indicates, is a lightweight web framework created to easily come up with a decent service. It has become one of the top of mind python frameworks in recent years mainly replacing Flask and relies on an engaged community.  
+The selected ORM, SqlAlchemy comes in pair with Alembic which is a recomended solution for migrations management.
 
 
 ### Open Weather API and Background tasks

@@ -13,9 +13,6 @@ class WeatherDataSqlalchemyRepository(WeatherDataRepository):
     def filter_by_request_id(self, id: str) -> List[WeatherData]:
         return self._db_session.query(WeatherData).filter(WeatherData.request_id == id).all()
 
-    def get_by_id(self, id: str) -> WeatherData:
-        return self._db_session.query(WeatherData).filter(WeatherData.id == id).first()
-
     def save(self, weather_data: WeatherData) -> WeatherData:
         self._db_session.add(weather_data)
         self._db_session.commit()

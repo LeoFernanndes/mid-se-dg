@@ -1,0 +1,8 @@
+**/__pycache__
+.idea
+.pytest_cache
+venv
+.coverage
+.env
+.env.docker-compose
+celerybeat-*
